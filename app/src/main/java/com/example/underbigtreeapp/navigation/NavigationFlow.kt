@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.underbigtreeapp.ui.order.OrderScreen
 import com.example.underbigtreeapp.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapp.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapp.ui.payment.TngPaymentScreen
@@ -13,8 +14,18 @@ import com.example.underbigtreeapp.ui.payment.TngPaymentSuccess
 fun NavigationFlow(navController: NavHostController){
     NavHost(
         navController = navController,
-        startDestination = "bankPayment"
+        startDestination = "order"
     ) {
+        composable("order") {
+            OrderScreen(
+                onBackClick = { navController.popBackStack() },
+                onPlaceOrder = { cartItem ->
+                    navController.navigate("tngPayment")
+                }
+            )
+        }
+
+
         composable("tngPayment") {
             TngPaymentScreen(
                 onPayClick = { formattedAmount ->
