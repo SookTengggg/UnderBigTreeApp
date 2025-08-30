@@ -78,14 +78,14 @@ fun OrderScreen(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Image(
             painter = painterResource(id = R.drawable.img),
             contentDescription = "Food",
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.size(90.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Column(
             modifier = Modifier.padding(8.dp),
@@ -234,7 +234,7 @@ fun OrderScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Place Order")
+            Text("Add to Cart")
         }
 
         if (showSauceWarning) {

@@ -25,7 +25,6 @@ fun NavigationFlow(navController: NavHostController){
             )
         }
 
-
         composable("tngPayment") {
             TngPaymentScreen(
                 onPayClick = { formattedAmount ->
