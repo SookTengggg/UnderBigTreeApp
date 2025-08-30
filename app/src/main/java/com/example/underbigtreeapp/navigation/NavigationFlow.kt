@@ -24,63 +24,63 @@ import kotlin.getValue
 
 @Composable
 fun NavigationFlow(navController: NavHostController){
-    NavHost(
-        navController = navController,
-        startDestination = "order"
-    ) {
-        composable("order") {
-            OrderScreen(
-                onBackClick = { navController.popBackStack() },
-                onPlaceOrder = { cartItem ->
-                    navController.navigate("tngPayment")
-                }
-            )
-        }
-
-
-        composable("tngPayment") {
-            TngPaymentScreen(
-                onPayClick = { formattedAmount ->
-                    navController.navigate("tngSuccess")
-                },
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable("tngSuccess") { backStackEntry ->
-            TngPaymentSuccess(
-                onReturnClick = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable("bankPayment") {
-            BankPaymentScreen(
-                onReject = {},
-                onApprove = { formattedAmount->
-                    navController.navigate("bankSuccess")
-                },
-            )
-        }
-
-        composable("bankSuccess") { backStackEntry ->
-            BankPaymentSuccess(
-                onDoneClick={}
-            )
-        }
-
-    }
-//    NavHost(navController = navController, startDestination = "home"){
-//        composable("home") {
-//            val context = LocalContext.current
-//            val database = AppDatabase.getDatabase(context)
-//            val repository = remember { MenuRepository(database) }
-//
-//            val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
-//            CustHomeScreen(points = 0, modifier = Modifier, viewModel = viewModel)
+//    NavHost(
+//        navController = navController,
+//        startDestination = "order"
+//    ) {
+//        composable("order") {
+//            OrderScreen(
+//                onBackClick = { navController.popBackStack() },
+//                onPlaceOrder = { cartItem ->
+//                    navController.navigate("tngPayment")
+//                }
+//            )
 //        }
+//
+//
+//        composable("tngPayment") {
+//            TngPaymentScreen(
+//                onPayClick = { formattedAmount ->
+//                    navController.navigate("tngSuccess")
+//                },
+//                onBackClick = {
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
+//
+//        composable("tngSuccess") { backStackEntry ->
+//            TngPaymentSuccess(
+//                onReturnClick = {
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
+//
+//        composable("bankPayment") {
+//            BankPaymentScreen(
+//                onReject = {},
+//                onApprove = { formattedAmount->
+//                    navController.navigate("bankSuccess")
+//                },
+//            )
+//        }
+//
+//        composable("bankSuccess") { backStackEntry ->
+//            BankPaymentSuccess(
+//                onDoneClick={}
+//            )
+//        }
+//
 //    }
+    NavHost(navController = navController, startDestination = "home"){
+        composable("home") {
+            val context = LocalContext.current
+            val database = AppDatabase.getDatabase(context)
+            val repository = remember { MenuRepository(database) }
+
+            val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
+            CustHomeScreen(points = 0, modifier = Modifier, viewModel = viewModel)
+        }
+    }
 }
