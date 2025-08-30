@@ -26,7 +26,11 @@ class MenuRepository (private val db: AppDatabase) {
                     name = doc.getString("name") ?: "",
                     price = doc.getDouble("price") ?: 0.0,
                     imageRes = doc.getString("imageRes") ?: "",
-                    category = doc.get("category") as? List<String> ?: emptyList()
+                    category = doc.get("category") as? List<String> ?: emptyList(),
+                    desc = doc.getString("desc") ?: "",
+                    availability = doc.getBoolean("availability") ?: false,
+                    addOn = doc.get("addOn") as? List<String> ?: emptyList(),
+                    sauce = doc.get("sauce") as? List<String> ?: emptyList()
                 )
             }
 

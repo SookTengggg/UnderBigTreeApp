@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.underbigtreeapp"
-        minSdk = 33
+        minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -61,6 +61,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation ("androidx.room:room-runtime:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.media3.common.ktx)
     kapt("androidx.room:room-compiler:2.6.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

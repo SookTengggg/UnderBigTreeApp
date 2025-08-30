@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import kotlin.collections.forEach
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.model.CategoryEntity
@@ -52,7 +53,7 @@ import com.example.underbigtreeapp.model.MenuEntity
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
 
 @Composable
-fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel) {
+fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController) {
     val menus by viewModel.menus.collectAsStateWithLifecycle(initialValue = emptyList())
     val categories by viewModel.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedCategory by viewModel.selectedCategory
@@ -88,7 +89,9 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(filteredItems) { item ->
-                        MenuCard(item, onClick = { /*TODO*/})
+                        MenuCard(item = item, onClick = {
+                            navController.navigate("order/${it.id}")
+                        })
                     }
                 }
             }
