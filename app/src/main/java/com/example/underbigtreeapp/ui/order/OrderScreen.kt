@@ -1,6 +1,5 @@
 package com.example.underbigtreeapp.ui.order
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,9 +20,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,21 +32,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.underbigtreeapp.R
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.underbigtreeapp.model.CartItem
 import com.example.underbigtreeapp.model.Option
+import com.example.underbigtreeapp.utils.formatAmount
 import com.example.underbigtreeapp.viewModel.OrderViewModel
+import com.example.underbigtreeapp.viewModel.OrderViewModelFactory
 
 @Composable
 fun OrderScreen(
-    viewModel: OrderViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    foodId: String,
     onBackClick: () -> Unit = {},
     onPlaceOrder: (CartItem) -> Unit={}
 ) {
+    val viewModel: OrderViewModel = viewModel(
+        factory = OrderViewModelFactory(foodId)
+    )
     val food by viewModel.food.collectAsState()
+
     val selectedSauces by viewModel.selectedSauces.collectAsState()
     val selectedAddOns by viewModel.selectedAddOns.collectAsState()
     val takeAway by viewModel.takeAway.collectAsState()
@@ -67,6 +72,7 @@ fun OrderScreen(
             .padding(horizontal=25.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(20.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -80,10 +86,10 @@ fun OrderScreen(
         }
         Spacer(modifier = Modifier.height(10.dp))
 
-        Image(
-            painter = painterResource(id = R.drawable.img),
-            contentDescription = "Food",
-            modifier = Modifier.size(90.dp)
+        AsyncImage(
+            model = food.imageRes,
+            contentDescription = food.name,
+            modifier = Modifier.size(140.dp)
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -98,12 +104,20 @@ fun OrderScreen(
             ) {
                 Text(
                     food.name,
-                    style = MaterialTheme.typography.headlineSmall
+                    fontSize=18.sp
                 )
-                Text("RM ${food.price}")
+                Text(formatAmount(food.price), fontSize=15.sp)
             }
+            Spacer(modifier = Modifier.height(5.dp))
 
-            Text(food.description, color = Color.Gray)
+            Text(
+                text = food.desc,
+                color = Color.Gray,
+                fontSize = 13.sp,
+                style = TextStyle(
+                    lineHeight = 14.sp
+                )
+            )
 
             Divider(
                 modifier = Modifier
@@ -119,9 +133,9 @@ fun OrderScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Sauce")
-                Text("*Select one or more", color = Color.Red)
+                Text("*Select one or more", color = Color.Red, fontSize = 14.sp)
             }
-            food.sauces.forEach { sauce ->
+            food.sauceIds.forEach { sauce: Option ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -132,23 +146,24 @@ fun OrderScreen(
                             checked = selectedSauces.contains(sauce),
                             onCheckedChange = { viewModel.toggleSauce(sauce, it) }
                         )
-                        Text(sauce.name)
+                        Text(sauce.name, fontSize = 14.sp)
                     }
-                    Text("+ RM ${sauce.price}")
+                    Text("+ ${formatAmount(sauce.price)}", fontSize = 14.sp)
                 }
-
             }
 
             Spacer(Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Add On")
-                Text("*Optional", color = Color.Red)
+                Text("*Optional", color = Color.Red, fontSize = 14.sp)
             }
-            food.addOns.forEach { addOn ->
+
+            food.addOnIds.forEach { addOn: Option ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -159,29 +174,20 @@ fun OrderScreen(
                             checked = selectedAddOns.contains(addOn),
                             onCheckedChange = { viewModel.toggleAddOn(addOn, it) }
                         )
-                        Text(addOn.name)
+                        Text(addOn.name, fontSize = 14.sp)
                     }
-                    Text("+ RM ${addOn.price}")
+                    Text("+ ${formatAmount(addOn.price)}", fontSize = 14.sp)
                 }
-
             }
 
             Spacer(Modifier.height(16.dp))
-            Text("Take Away")
-
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = takeAway?.name == "Yes",
-                        onClick = { viewModel.setTakeAway(Option("Yes", 0.50)) }
-                    )
-                    Text("Yes")
-                }
-                Text("+ RM 0.50")
+                Text("Take Away")
+                Text("*Optional", color = Color.Red, fontSize = 14.sp)
             }
 
             Row(
@@ -190,13 +196,15 @@ fun OrderScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = takeAway?.name == "No",
-                        onClick = { viewModel.setTakeAway(Option("No", 0.0)) }
+                    Checkbox(
+                        checked = takeAway,
+                        onCheckedChange = { checked ->
+                            viewModel.toggleTakeAway(checked)
+                        }
                     )
-                    Text("No")
+                    Text("Packaging Fee", fontSize = 14.sp)
                 }
-                Text("+ RM 0.00")
+                Text("+ RM 0.50", fontSize = 14.sp)
             }
 
             Spacer(Modifier.height(16.dp))
@@ -206,7 +214,7 @@ fun OrderScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Remarks")
-                Text("*Optional", color = Color.Red)
+                Text("*Optional", color = Color.Red, fontSize = 14.sp)
             }
             Spacer(Modifier.height(4.dp))
             OutlinedTextField(
@@ -249,13 +257,12 @@ fun OrderScreen(
                 }
             )
         }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(50.dp))
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewOrderScreen() {
-    OrderScreen()
+//    OrderScreen()
 }

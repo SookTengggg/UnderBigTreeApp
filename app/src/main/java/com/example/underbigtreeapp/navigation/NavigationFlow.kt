@@ -26,10 +26,21 @@ import kotlin.getValue
 fun NavigationFlow(navController: NavHostController){
     NavHost(
         navController = navController,
-        startDestination = "order"
+        startDestination = "home"
     ) {
-        composable("order") {
+        composable("home") {
+            val context = LocalContext.current
+            val database = AppDatabase.getDatabase(context)
+            val repository = remember { MenuRepository(database) }
+
+            val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
+            CustHomeScreen(points = 0, modifier = Modifier, viewModel = viewModel, navController)
+        }
+
+        composable("order/{foodId}") {backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
             OrderScreen(
+                foodId = foodId,
                 onBackClick = { navController.popBackStack() },
                 onPlaceOrder = { cartItem ->
                     navController.navigate("tngPayment")
@@ -72,14 +83,4 @@ fun NavigationFlow(navController: NavHostController){
         }
 
     }
-//    NavHost(navController = navController, startDestination = "home"){
-//        composable("home") {
-//            val context = LocalContext.current
-//            val database = AppDatabase.getDatabase(context)
-//            val repository = remember { MenuRepository(database) }
-//
-//            val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
-//            CustHomeScreen(points = 0, modifier = Modifier, viewModel = viewModel)
-//        }
-//    }
 }

@@ -5,7 +5,7 @@ data class CartItem(
     val selectedSauces: List<Option>,
     val selectedAddOns: List<Option>,
     val quantity: Int,
-    val takeAway: Option?,
+    val takeAway: Boolean,
     val remarks: String,
     val totalPrice: Double
 )

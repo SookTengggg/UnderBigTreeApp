@@ -1,32 +1,98 @@
 package com.example.underbigtreeapp.viewModel
 
+import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
+import androidx.media3.common.util.UnstableApi
 import com.example.underbigtreeapp.model.CartItem
 import com.example.underbigtreeapp.model.Food
 import com.example.underbigtreeapp.model.Option
+import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class OrderViewModel : ViewModel() {
+class OrderViewModel(private val foodId: String) : ViewModel() {
 
-    private val _food = MutableStateFlow(
-        Food(
-            name = "Spaghetti(Fish)",
-            price = 10.50,
-            description = "A type of noodles.",
-            sauces = listOf(
-                Option("Tomato", 0.0),
-                Option("Cheese", 0.0),
-                Option("Mushroom", 0.0)
-            ),
-            addOns = listOf(
-                Option("Egg", 1.0),
-                Option("Hot dog", 1.0),
-                Option("Hash Brown", 1.5)
-            )
-        )
-    )
+    private val _food = MutableStateFlow(Food())
     val food: StateFlow<Food> = _food
+
+    init {
+        fetchFoodDetails(foodId)
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun fetchFoodDetails(foodId: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("Menu").document(foodId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                snapshot.toObject(Food::class.java)?.let { food ->
+                    _food.value = food.copy(id = snapshot.id)
+
+                    // Resolve sauces
+                    if (food.sauce.isNotEmpty()) {
+                        fetchSauces(food.sauce) { sauces ->
+                            _food.value = _food.value.copy(
+                                sauceIds = sauces,
+                                addOnIds = _food.value.addOnIds
+                            )
+                        }
+                    }
+
+
+                    // Resolve add-ons
+                    if (food.addOn.isNotEmpty()) {
+                        fetchAddOns(food.addOn) { addOns ->
+                            _food.value = _food.value.copy(
+                                addOnIds = addOns,
+                                sauceIds = _food.value.sauceIds
+                            )
+                        }
+                    }
+                }
+            }
+
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun fetchSauces(sauceIds: List<String>, onResult: (List<Option>) -> Unit) {
+        if (sauceIds.isEmpty()) {
+            onResult(emptyList())
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection("Sauce")
+            .whereIn(FieldPath.documentId(), sauceIds)
+            .get()
+            .addOnSuccessListener { documents ->
+                val sauceList = documents.mapNotNull { it.toObject(Option::class.java) }
+                onResult(sauceList)
+            }
+            .addOnFailureListener { e ->
+                onResult(emptyList())
+            }
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun fetchAddOns(addOnIds: List<String>, onResult: (List<Option>) -> Unit) {
+        if (addOnIds.isEmpty()) {
+            onResult(emptyList())
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection("AddOn")
+            .whereIn(FieldPath.documentId(), addOnIds)
+            .get()
+            .addOnSuccessListener { documents ->
+                val addOnList = documents.mapNotNull { it.toObject(Option::class.java) }
+                onResult(addOnList)
+            }
+            .addOnFailureListener { e ->
+                onResult(emptyList())
+            }
+    }
 
     private val _selectedSauces = MutableStateFlow(setOf<Option>())
     val selectedSauces: StateFlow<Set<Option>> = _selectedSauces
@@ -34,8 +100,12 @@ class OrderViewModel : ViewModel() {
     private val _selectedAddOns = MutableStateFlow(setOf<Option>())
     val selectedAddOns: StateFlow<Set<Option>> = _selectedAddOns
 
-    private val _takeAway = MutableStateFlow<Option?>(Option("No", 0.0))
-    val takeAway: StateFlow<Option?> = _takeAway
+    private val _takeAway = MutableStateFlow(false)
+    val takeAway: StateFlow<Boolean> = _takeAway
+
+    fun toggleTakeAway(checked: Boolean) {
+        _takeAway.value = checked
+    }
 
     private val _remarks = MutableStateFlow("")
     val remarks: StateFlow<String> = _remarks
@@ -49,10 +119,6 @@ class OrderViewModel : ViewModel() {
 
     fun toggleAddOn(addOn: Option, checked: Boolean) {
         _selectedAddOns.value = if (checked) _selectedAddOns.value + addOn else _selectedAddOns.value - addOn
-    }
-
-    fun setTakeAway(option: Option) {
-        _takeAway.value = option
     }
 
     fun setRemarks(value: String) {
@@ -71,7 +137,7 @@ class OrderViewModel : ViewModel() {
         val base = _food.value.price
         val addOnsPrice = _selectedAddOns.value.sumOf { it.price }
         val saucesPrice = _selectedSauces.value.sumOf { it.price }
-        val takeAwayPrice = _takeAway.value?.price ?: 0.0
+        val takeAwayPrice = if (_takeAway.value) 0.50 else 0.0
 
         val total = (base + addOnsPrice + saucesPrice + takeAwayPrice) * _quantity.value
 
