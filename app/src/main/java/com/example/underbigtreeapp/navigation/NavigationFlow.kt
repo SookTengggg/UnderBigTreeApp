@@ -18,58 +18,83 @@ import com.example.underbigtreeapp.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapp.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapp.ui.payment.TngPaymentScreen
 import com.example.underbigtreeapp.ui.payment.TngPaymentSuccess
+import com.example.underbigtreeapp.ui.pointPage.PointScreen
+import com.example.underbigtreeapp.ui.profilePage.ProfileScreen
 import com.example.underbigtreeapp.ui.signupPage.SignupScreen
 import com.example.underbigtreeapp.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapp.viewModel.CartViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModelFactory
 import com.example.underbigtreeapp.viewModel.OrderSummaryViewModel
+import com.example.underbigtreeapp.viewModel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+
 
 @Composable
 fun NavigationFlow(navController: NavHostController) {
     val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
-    val startDestination = if (isLoggedIn) "welcome" else "login"
+    val startDestination = if (isLoggedIn) "home" else "welcome"
+
+    val userViewModel: UserViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = startDestination) {
+        composable("welcome") {
+            WelcomeScreen(
+                userViewModel = userViewModel,
+                onGoToProfile = { navController.navigate("profile") },
+                onGoToPoints = { navController.navigate("points") },
+                onLogout = {
+                    userViewModel.logout()
+                    navController.navigate("welcome") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = { navController.navigate("login") },
+                onNavigateToSignup = { navController.navigate("signup") }
+            )
+        }
+
+        composable("signup") {
+            SignupScreen(
+                onSignupSuccess = {
+                    navController.navigate("welcome") {
+                        popUpTo("signup") { inclusive = true }
+                    }
+                },
+                onGoToLogin = { navController.navigate("login") },
+                userViewModel = userViewModel
+            )
+        }
+
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("welcome") {
+                    navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
                     }
                 },
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                }
+                onGoToSignup = { navController.navigate("signup") },
+                userViewModel = userViewModel
             )
         }
 
-        composable("register") {
-            SignupScreen(
-                onRegisterSuccess = {
-                    navController.navigate("welcome") {
-                        popUpTo("register") { inclusive = true }
-                    }
-                },
-                onNavigateToLogin = {
-                    navController.navigate("login")
-                }
-            )
-        }
-
-        composable("welcome") {
-            WelcomeScreen(
+        composable("profile") {
+            ProfileScreen(
+                userViewModel = userViewModel,
+                onBack = { navController.popBackStack() },
                 onLogout = {
-                    navController.navigate("login") {
-                        popUpTo("welcome") { inclusive = true }
-                    }
-                },
-                onContinue = {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+                    userViewModel.logout()
+                    navController.navigate("welcome") {
+                        popUpTo("home") { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable("points") {
+            PointScreen(
+                userViewModel = userViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -81,11 +106,12 @@ fun NavigationFlow(navController: NavHostController) {
             val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
 
             CustHomeScreen(
-                points = 0,
-                modifier = Modifier,
                 viewModel = viewModel,
                 navController = navController,
-                cartViewModel = cartViewModel
+                cartViewModel = cartViewModel,
+                userViewModel = userViewModel,
+                onGoToPoints = { navController.navigate("points") },
+                onGoToProfile = { navController.navigate("profile") }
             )
         }
 

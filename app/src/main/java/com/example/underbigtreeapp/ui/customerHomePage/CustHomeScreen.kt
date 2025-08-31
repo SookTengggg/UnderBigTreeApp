@@ -1,5 +1,6 @@
 package com.example.underbigtreeapp.ui.customerHomePage
 
+import android.security.identity.AccessControlProfile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -44,24 +46,40 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import kotlin.collections.forEach
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.model.CategoryEntity
 import com.example.underbigtreeapp.model.MenuEntity
 import com.example.underbigtreeapp.viewModel.CartViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
+import com.example.underbigtreeapp.viewModel.UserViewModel
 
 
 @Composable
-fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController, cartViewModel: CartViewModel) {
+fun CustHomeScreen(
+    modifier: Modifier = Modifier,
+    viewModel: CustHomeViewModel,
+    userViewModel: UserViewModel,
+    navController: NavHostController,
+    cartViewModel: CartViewModel,
+    onGoToPoints: () -> Unit,
+    onGoToProfile: () -> Unit
+) {
     val menus by viewModel.menus.collectAsStateWithLifecycle(initialValue = emptyList())
     val categories by viewModel.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedCategory by viewModel.selectedCategory
     val cartItems by cartViewModel.cartItems.collectAsState()
+
+    val user by userViewModel.user.observeAsState()
+    val points = user?.points ?: 0
+
     val desiredOrder = listOf("All", "Rice", "Spaghetti", "Chicken", "Fish", "Drinks")
 
     val allCategory = categories.find { it.name == "All" } ?: CategoryEntity("all", "All", "")
-    val sortedCategories = listOf(allCategory) + categories.filter { it.name != "All" }.sortedBy { desiredOrder.indexOf(it.name).takeIf { it >= 0 } ?: Int.MAX_VALUE }
+    val sortedCategories = listOf(allCategory) +
+            categories.filter { it.name != "All" }
+                .sortedBy { desiredOrder.indexOf(it.name).takeIf { it >= 0 } ?: Int.MAX_VALUE }
 
     Box(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxSize()) {
@@ -73,7 +91,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
             )
 
             Column(Modifier.fillMaxSize()) {
-                Points(points = points, onClick = {/* TODO */ })
+                Points(points = points, onClick = onGoToPoints)
 
                 val filteredItems = if (selectedCategory == "All") {
                     menus
@@ -96,6 +114,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                 }
             }
         }
+
         if(cartItems.isNotEmpty()) {
             FloatingActionButton(
                 onClick = { /*TODO*/ },
@@ -117,7 +136,10 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
             }
         }
 
-        BottomNavigation(modifier = Modifier.align(Alignment.BottomCenter))
+        BottomNavigationBar(
+            navController = navController,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -240,25 +262,28 @@ fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
 }
 
 @Composable
-fun BottomNavigation(modifier: Modifier = Modifier) {
+fun BottomNavigationBar(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
     NavigationBar (
         modifier = modifier.fillMaxWidth(),
         containerColor = Color(0xFFEFEFEF),
         contentColor = Color.Black
     ) {
         NavigationBarItem(
-            selected = true,
-            onClick = {/* TODO */},
+            selected = false,
+            onClick = {navController.navigate("home")},
             icon = {
                 Icon(
                     imageVector = Icons.Filled.Home,
-                    contentDescription = "Home",
+                contentDescription = "Home"
                 )
             }
         )
         NavigationBarItem(
             selected = false,
-            onClick = {/* TODO */},
+            onClick = {navController.navigate("points")},
             icon = {
                 Icon(
                     imageVector = Icons.Filled.Menu,
@@ -268,7 +293,7 @@ fun BottomNavigation(modifier: Modifier = Modifier) {
         )
         NavigationBarItem(
             selected = false,
-            onClick = {/* TODO */},
+            onClick = {navController.navigate("profile")},
             icon = {
                 Icon(
                     imageVector = Icons.Filled.Person,

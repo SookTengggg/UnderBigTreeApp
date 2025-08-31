@@ -5,22 +5,39 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.underbigtreeapp.model.CategoryEntity
 import com.example.underbigtreeapp.model.MenuEntity
 
 @Database(
-    entities = [MenuEntity::class, CategoryEntity::class],
-    version = 1,
-    exportSchema = false
+    entities = [MenuEntity::class, CategoryEntity::class, UserEntity::class],
+    version = 3,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun menuDao(): MenuDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun userDao(): UserDao
 
     companion object{
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE users ADD COLUMN points INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE users ADD COLUMN points INTEGER NOT NULL DEFAULT 0")
+            }
+        }
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this){
@@ -28,7 +45,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build()
+                )
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .build()
                 INSTANCE = instance
                 instance
             }
