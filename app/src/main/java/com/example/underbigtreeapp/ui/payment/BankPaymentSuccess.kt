@@ -17,14 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
+import com.example.underbigtreeapp.utils.formatAmount
 import com.example.underbigtreeapp.viewModel.PaymentViewModel
 
 @Composable
 fun BankPaymentSuccess(
+    totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
     onDoneClick: () -> Unit = {}
 ) {
-    val formattedAmount = viewModel.getFormattedAmount()
     val transactionDate = viewModel.getTransactionDate()
     Column(
         modifier = Modifier
@@ -66,7 +67,7 @@ fun BankPaymentSuccess(
         ) {
             RowItem("Transaction Type", "Pay Now Transfer")
             RowItem("Transfer To", "UNDER BIG TREE")
-            RowItem("Amount", formattedAmount)
+            RowItem("Amount", "${formatAmount(totalAmount)}")
             RowItem("Transaction Date", transactionDate)
         }
 
@@ -97,10 +98,4 @@ fun RowItem(label: String, value: String) {
         Text(text = label, fontSize = 14.sp, color = Color.Gray)
         Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewBankPaymentSuccess() {
-    BankPaymentSuccess()
 }

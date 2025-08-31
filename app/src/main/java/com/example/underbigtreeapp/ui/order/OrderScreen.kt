@@ -127,84 +127,86 @@ fun OrderScreen(
                 thickness = 1.dp
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Sauce")
-                Text("*Select one or more", color = Color.Red, fontSize = 14.sp)
-            }
-            food.sauceIds.forEach { sauce: Option ->
+            if (!food.category.contains("Drinks")) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = selectedSauces.contains(sauce),
-                            onCheckedChange = { viewModel.toggleSauce(sauce, it) }
-                        )
-                        Text(sauce.name, fontSize = 14.sp)
-                    }
-                    Text("+ ${formatAmount(sauce.price)}", fontSize = 14.sp)
+                    Text("Sauce")
+                    Text("*Select one or more", color = Color.Red, fontSize = 14.sp)
                 }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Add On")
-                Text("*Optional", color = Color.Red, fontSize = 14.sp)
-            }
-
-            food.addOnIds.forEach { addOn: Option ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = selectedAddOns.contains(addOn),
-                            onCheckedChange = { viewModel.toggleAddOn(addOn, it) }
-                        )
-                        Text(addOn.name, fontSize = 14.sp)
-                    }
-                    Text("+ ${formatAmount(addOn.price)}", fontSize = 14.sp)
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Take Away")
-                Text("*Optional", color = Color.Red, fontSize = 14.sp)
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checked = takeAway,
-                        onCheckedChange = { checked ->
-                            viewModel.toggleTakeAway(checked)
+                food.sauceIds.forEach { sauce: Option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = selectedSauces.contains(sauce),
+                                onCheckedChange = { viewModel.toggleSauce(sauce, it) }
+                            )
+                            Text(sauce.name, fontSize = 14.sp)
                         }
-                    )
-                    Text("Packaging Fee", fontSize = 14.sp)
+                        Text("+ ${formatAmount(sauce.price)}", fontSize = 14.sp)
+                    }
                 }
-                Text("+ RM 0.50", fontSize = 14.sp)
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Add On")
+                    Text("*Optional", color = Color.Red, fontSize = 14.sp)
+                }
+
+                food.addOnIds.forEach { addOn: Option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = selectedAddOns.contains(addOn),
+                                onCheckedChange = { viewModel.toggleAddOn(addOn, it) }
+                            )
+                            Text(addOn.name, fontSize = 14.sp)
+                        }
+                        Text("+ ${formatAmount(addOn.price)}", fontSize = 14.sp)
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Take Away")
+                    Text("*Optional", color = Color.Red, fontSize = 14.sp)
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = takeAway,
+                            onCheckedChange = { checked ->
+                                viewModel.toggleTakeAway(checked)
+                            }
+                        )
+                        Text("Packaging Fee", fontSize = 14.sp)
+                    }
+                    Text("+ RM 0.50", fontSize = 14.sp)
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -234,10 +236,16 @@ fun OrderScreen(
 
         Button(
             onClick = {
-                if (selectedSauces.isEmpty()) {
+                if (!food.category.any { it.equals("Drinks", ignoreCase = true) } && selectedSauces.isEmpty()) {
                     showSauceWarning = true
                 } else {
-                    onPlaceOrder(viewModel.buildCartItem())
+                    val cartItem = viewModel.buildCartItem()
+                    viewModel.saveOrder(
+                        cartItem,
+                        onSuccess = {
+                            onPlaceOrder(cartItem)
+                        }
+                    )
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -261,8 +269,3 @@ fun OrderScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewOrderScreen() {
-//    OrderScreen()
-}

@@ -1,12 +1,10 @@
 package com.example.underbigtreeapp.navigation
 
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,13 +12,14 @@ import com.example.underbigtreeapp.data.local.AppDatabase
 import com.example.underbigtreeapp.repository.MenuRepository
 import com.example.underbigtreeapp.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapp.ui.order.OrderScreen
+import com.example.underbigtreeapp.ui.order.OrderSummaryScreen
 import com.example.underbigtreeapp.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapp.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapp.ui.payment.TngPaymentScreen
 import com.example.underbigtreeapp.ui.payment.TngPaymentSuccess
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModelFactory
-import kotlin.getValue
+import com.example.underbigtreeapp.viewModel.OrderSummaryViewModel
 
 @Composable
 fun NavigationFlow(navController: NavHostController){
@@ -43,42 +42,57 @@ fun NavigationFlow(navController: NavHostController){
                 foodId = foodId,
                 onBackClick = { navController.popBackStack() },
                 onPlaceOrder = { cartItem ->
-                    navController.navigate("tngPayment")
+                    navController.navigate("orderSummaryScreen")
                 }
             )
         }
 
-        composable("tngPayment") {
+        composable("orderSummaryScreen") {
+            val summaryViewModel: OrderSummaryViewModel = viewModel()
+            OrderSummaryScreen(
+                viewModel = summaryViewModel,
+                navController,
+                onBackClick = { navController.popBackStack() },
+            )
+        }
+
+        composable("tngPayment/{totalAmount}") { backStackEntry ->
+            val totalAmount = backStackEntry.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
             TngPaymentScreen(
+                totalAmount = totalAmount,
                 onPayClick = { formattedAmount ->
-                    navController.navigate("tngSuccess")
+                    navController.navigate("tngSuccess/$totalAmount")
                 },
-                onBackClick = {
-                    navController.popBackStack()
-                }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
-        composable("tngSuccess") { backStackEntry ->
+        composable("tngSuccess/{totalAmount}") { backStackEntry ->
+            val totalAmount = backStackEntry.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
             TngPaymentSuccess(
+                totalAmount = totalAmount,
                 onReturnClick = {
-                    navController.popBackStack()
+                    navController.navigate("home")
                 }
             )
         }
 
-        composable("bankPayment") {
+        composable("bankPayment/{totalAmount}") {backStackEntry ->
+            val totalAmount = backStackEntry.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
             BankPaymentScreen(
-                onReject = {},
+                totalAmount = totalAmount,
+                onReject = {navController.popBackStack()},
                 onApprove = { formattedAmount->
-                    navController.navigate("bankSuccess")
+                    navController.navigate("bankSuccess/$totalAmount")
                 },
             )
         }
 
-        composable("bankSuccess") { backStackEntry ->
+        composable("bankSuccess/{totalAmount}") { backStackEntry ->
+            val totalAmount = backStackEntry.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
             BankPaymentSuccess(
-                onDoneClick={}
+                totalAmount = totalAmount,
+                onDoneClick ={navController.navigate("home")}
             )
         }
 

@@ -24,15 +24,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
+import com.example.underbigtreeapp.utils.formatAmount
 import com.example.underbigtreeapp.viewModel.PaymentViewModel
 
 @Composable
 fun BankPaymentScreen(
+    totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
     onReject: () -> Unit = {},
     onApprove: (String) -> Unit = {}
 ) {
-    val formattedAmount = viewModel.getFormattedAmount()
 
     Column(
         modifier = Modifier
@@ -52,7 +53,7 @@ fun BankPaymentScreen(
 
         Text("Amount", fontSize = 16.sp, color = Color.Gray)
         Text(
-            text = formattedAmount,
+            text = "${formatAmount(totalAmount)}",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
@@ -101,7 +102,7 @@ fun BankPaymentScreen(
             }
 
             Button(
-                onClick = { onApprove(formattedAmount) },
+                onClick = { onApprove(formatAmount(totalAmount)) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFFC107),
                     contentColor = Color.Black
@@ -117,8 +118,3 @@ fun BankPaymentScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewBankPaymentScreen() {
-    BankPaymentScreen()
-}

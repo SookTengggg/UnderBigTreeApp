@@ -32,16 +32,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
+import com.example.underbigtreeapp.utils.formatAmount
 import com.example.underbigtreeapp.viewModel.PaymentViewModel
 
 @Composable
 fun TngPaymentScreen(
+    totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPayClick: (String) -> Unit = {}
 ) {
     val maskedNumber = viewModel.getMaskedPhone()
-    val formattedAmount = viewModel.getFormattedAmount()
 
     Column(
         modifier = Modifier
@@ -82,7 +83,7 @@ fun TngPaymentScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = formattedAmount,
+            text = "${formatAmount(totalAmount)}",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black
@@ -136,7 +137,7 @@ fun TngPaymentScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Button(
-            onClick = { onPayClick(formattedAmount) },
+            onClick = { onPayClick(formatAmount(totalAmount)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -149,10 +150,3 @@ fun TngPaymentScreen(
     }
 }
 
-
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewTngPaymentScreen() {
-    TngPaymentScreen()
-}

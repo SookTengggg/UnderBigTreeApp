@@ -27,20 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
+import com.example.underbigtreeapp.utils.formatAmount
 import com.example.underbigtreeapp.viewModel.PaymentViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun TngPaymentSuccess(
+    totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
     onReturnClick: () -> Unit = {},
 ) {
-    val formattedAmount = viewModel.getFormattedAmount()
 
     var countdown by remember { mutableStateOf(3) }
     LaunchedEffect(Unit) {
@@ -77,7 +77,7 @@ fun TngPaymentSuccess(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = formattedAmount,
+            text = "${formatAmount(totalAmount)}",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black
@@ -120,8 +120,3 @@ fun TngPaymentSuccess(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewTngPaymentSuccess() {
-    TngPaymentSuccess()
-}

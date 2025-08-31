@@ -29,29 +29,40 @@ class OrderViewModel(private val foodId: String) : ViewModel() {
                 snapshot.toObject(Food::class.java)?.let { food ->
                     _food.value = food.copy(id = snapshot.id)
 
-                    // Resolve sauces
-                    if (food.sauce.isNotEmpty()) {
-                        fetchSauces(food.sauce) { sauces ->
-                            _food.value = _food.value.copy(
-                                sauceIds = sauces,
-                                addOnIds = _food.value.addOnIds
-                            )
-                        }
-                    }
+                    db.collection("Category")
+                        .whereEqualTo("name", food.category)
+                        .get()
+                        .addOnSuccessListener { snapshot ->
+                            val categoryDoc = snapshot.documents.firstOrNull()
+                            val categoryName = categoryDoc?.getString("name") ?: ""
 
+                            if (categoryName.equals("Drinks", ignoreCase = true)) {
+                                _food.value = _food.value.copy(
+                                    sauceIds = emptyList(),
+                                    addOnIds = emptyList()
+                                )
+                            } else {
+                                if (food.sauce.isNotEmpty()) {
+                                    fetchSauces(food.sauce) { sauces ->
+                                        _food.value = _food.value.copy(
+                                            sauceIds = sauces,
+                                            addOnIds = _food.value.addOnIds
+                                        )
+                                    }
+                                }
 
-                    // Resolve add-ons
-                    if (food.addOn.isNotEmpty()) {
-                        fetchAddOns(food.addOn) { addOns ->
-                            _food.value = _food.value.copy(
-                                addOnIds = addOns,
-                                sauceIds = _food.value.sauceIds
-                            )
+                                if (food.addOn.isNotEmpty()) {
+                                    fetchAddOns(food.addOn) { addOns ->
+                                        _food.value = _food.value.copy(
+                                            addOnIds = addOns,
+                                            sauceIds = _food.value.sauceIds
+                                        )
+                                    }
+                                }
+                            }
                         }
-                    }
                 }
             }
-
     }
 
     @OptIn(UnstableApi::class)
@@ -152,4 +163,31 @@ class OrderViewModel(private val foodId: String) : ViewModel() {
         )
     }
 
+    fun saveOrder(
+        cartItem: CartItem,
+        onSuccess: () -> Unit
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        val counterRef = db.collection("Counter").document("OrdersCounter")
+
+        db.runTransaction { transaction ->
+            //Read the last order number
+            val snapshot = transaction.get(counterRef)
+            val lastNumber = snapshot.getLong("lastOrderNumber") ?: 0
+            val newNumber = lastNumber + 1
+
+            //Update counter
+            transaction.update(counterRef, "lastOrderNumber", newNumber)
+
+            //Generate orderId
+            val orderId = "O" + newNumber.toString().padStart(4, '0')
+
+            //Copy CartItem with new orderId
+            val orderWithId = cartItem.copy(orderId = orderId)
+
+            //Save the order document
+            val orderRef = db.collection("Orders").document(orderId)
+            transaction.set(orderRef, orderWithId)
+        }.addOnSuccessListener { onSuccess() }
+    }
 }
