@@ -33,7 +33,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -47,12 +46,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlin.collections.forEach
 import coil.compose.AsyncImage
-import com.example.underbigtreeapp.model.CartItem
 import com.example.underbigtreeapp.model.CategoryEntity
-import com.example.underbigtreeapp.model.Food
 import com.example.underbigtreeapp.model.MenuEntity
 import com.example.underbigtreeapp.viewModel.CartViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
+
 
 @Composable
 fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController, cartViewModel: CartViewModel) {
