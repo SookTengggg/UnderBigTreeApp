@@ -1,6 +1,5 @@
 package com.example.underbigtreeapp.ui.customerHomePage
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,19 +27,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,14 +48,16 @@ import kotlin.collections.forEach
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.model.CategoryEntity
 import com.example.underbigtreeapp.model.MenuEntity
+import com.example.underbigtreeapp.viewModel.CartViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
 
+
 @Composable
-fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController) {
+fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController, cartViewModel: CartViewModel) {
     val menus by viewModel.menus.collectAsStateWithLifecycle(initialValue = emptyList())
     val categories by viewModel.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedCategory by viewModel.selectedCategory
-
+    val cartItems by cartViewModel.cartItems.collectAsState()
     val desiredOrder = listOf("All", "Rice", "Spaghetti", "Chicken", "Fish", "Drinks")
 
     val allCategory = categories.find { it.name == "All" } ?: CategoryEntity("all", "All", "")
@@ -96,6 +96,27 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                 }
             }
         }
+        if(cartItems.isNotEmpty()) {
+            FloatingActionButton(
+                onClick = { /*TODO*/ },
+                modifier = Modifier
+                    .align(alignment = Alignment.BottomEnd)
+                    .padding(bottom = 110.dp, end = 5.dp)
+                    .fillMaxWidth(0.95f),
+                containerColor = Color.Black,
+                contentColor = Color.White
+            ) {
+                Row (
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
+                    Text("RM %.2f".format(cartViewModel.getTotalPrice()))
+                }
+            }
+        }
+
         BottomNavigation(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -134,7 +155,6 @@ fun SideNavigation(categories: List<CategoryEntity>, selected: String, onCategor
                             model = category.imageRes,
                             contentDescription = category.name,
                             Modifier.size(40.dp),
-                            //tint = if (category.name == selected) Color.Black else Color.Unspecified
                         )
                         Text(
                             text = category.name,
@@ -167,12 +187,21 @@ fun Points(points: Int, onClick: () -> Unit){
 
 @Composable
 fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
+    val isAvailable = item.availability
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { onClick(item) },
-        elevation = CardDefaults.cardElevation(4.dp)
+            .then(
+                if (isAvailable) Modifier.clickable { onClick(item) }
+                else Modifier
+            ),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFEFEFEF),
+            contentColor = Color.Black
+        )
     ){
         Column(
             modifier = Modifier
@@ -180,27 +209,50 @@ fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
                 .padding(16.dp)
                 .height(IntrinsicSize.Min),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
-            AsyncImage(
-                model = item.imageRes,
-                contentDescription = item.name,
-                modifier = Modifier.size(120.dp)
-            )
-            Text(item.name, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
-            Text("RM %.2f".format(item.price))
+            if(!isAvailable){
+               Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                    Text(
+                        text = "*Unavailable",
+                        color = Color.Red,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.alpha(if (isAvailable) 1f else 0.3f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                AsyncImage(
+                    model = item.imageRes,
+                    contentDescription = item.name,
+                    modifier = Modifier.size(120.dp)
+                )
+                Text(
+                    item.name,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Text("RM %.2f".format(item.price))
+            }
         }
     }
 }
 
 @Composable
 fun BottomNavigation(modifier: Modifier = Modifier) {
-    NavigationBar (modifier = modifier.fillMaxWidth()) {
+    NavigationBar (
+        modifier = modifier.fillMaxWidth(),
+        containerColor = Color(0xFFEFEFEF),
+        contentColor = Color.Black
+    ) {
         NavigationBarItem(
             selected = true,
             onClick = {/* TODO */},
             icon = {
                 Icon(
                     imageVector = Icons.Filled.Home,
-                    contentDescription = "Home"
+                    contentDescription = "Home",
                 )
             }
         )
