@@ -18,6 +18,7 @@ import com.example.underbigtreeapp.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapp.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapp.ui.payment.TngPaymentScreen
 import com.example.underbigtreeapp.ui.payment.TngPaymentSuccess
+import com.example.underbigtreeapp.viewModel.CartViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModel
 import com.example.underbigtreeapp.viewModel.CustHomeViewModelFactory
 import kotlin.getValue
@@ -32,9 +33,9 @@ fun NavigationFlow(navController: NavHostController){
             val context = LocalContext.current
             val database = AppDatabase.getDatabase(context)
             val repository = remember { MenuRepository(database) }
-
+            val cartViewModel: CartViewModel = viewModel()
             val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
-            CustHomeScreen(points = 0, modifier = Modifier, viewModel = viewModel, navController)
+            CustHomeScreen(points = 0, modifier = Modifier, viewModel = viewModel, navController, cartViewModel = cartViewModel)
         }
 
         composable("order/{foodId}") {backStackEntry ->
