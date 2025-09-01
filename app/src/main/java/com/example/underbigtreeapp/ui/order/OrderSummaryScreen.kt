@@ -125,8 +125,8 @@ fun OrderSummaryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Subtotal:", fontSize = 16.sp)
-                Text("${formatAmount(subtotal)}", fontSize = 16.sp)
+                Text("Subtotal:", fontSize = 20.sp)
+                Text("${formatAmount(subtotal)}", fontSize = 20.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))

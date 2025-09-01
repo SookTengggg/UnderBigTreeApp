@@ -15,9 +15,21 @@ class OrderSummaryViewModel : ViewModel() {
         db.collection("Orders")
             .get()
             .addOnSuccessListener { result ->
-                val list = result.mapNotNull { it.toObject(CartItem::class.java) }
+                val list = result.mapNotNull { snap ->
+                    snap.toObject(CartItem::class.java).copy(orderId = snap.id)
+                }
                 _orders.value = list
             }
     }
+
+    fun deleteOrder(orderId: String) {
+        db.collection("Orders").document(orderId)
+            .delete()
+            .addOnSuccessListener {
+                _orders.value = _orders.value.filterNot { it.orderId == orderId }
+            }
+    }
+
+
 }
 
