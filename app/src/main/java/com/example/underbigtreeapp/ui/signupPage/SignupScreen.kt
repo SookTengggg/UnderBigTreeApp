@@ -1,127 +1,96 @@
 package com.example.underbigtreeapp.ui.signupPage
 
-import android.widget.Toast
+import android.app.Application
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.underbigtreeapp.data.remote.FirebaseService
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.underbigtreeapp.viewModel.SignupViewModelFactory
+import com.example.underbigtreeapp.viewModel.UserViewModel
 
 @Composable
 fun SignupScreen(
-    onRegisterSuccess: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onSignupSuccess: () -> Unit,
+    onGoToLogin: () -> Unit,
+    userViewModel: UserViewModel = viewModel(
+        factory = SignupViewModelFactory(LocalContext.current.applicationContext as Application)
+    )
 ) {
-    val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
-
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = "Sign Up", style = MaterialTheme.typography.headlineMedium)
+    val loading by userViewModel.loading.observeAsState(false)
+    val error by userViewModel.error.observeAsState()
+    val user by userViewModel.user.observeAsState()
 
-            Spacer(modifier = Modifier.height(20.dp))
+    LaunchedEffect(user?.uid) {
+        if (user != null) onSignupSuccess()
+    }
+
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("Sign Up", style = MaterialTheme.typography.headlineMedium)
+            Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                singleLine = true,
+                value = name, onValueChange = { name = it },
+                label = { Text("Full Name") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = phone, onValueChange = { phone = it },
+                label = { Text("Phone Number") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = email, onValueChange = { email = it },
+                label = { Text("Email") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = password, onValueChange = { password = it },
+                label = { Text("Password") }, singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-            )
-
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = { Text("Confirm Password") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            val scope = rememberCoroutineScope()
+            Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
-                    if (password != confirmPassword) {
-                        errorMessage = "Passwords do not match"
-                        return@Button
-                    }
-                    isLoading = true
-                    scope.launch {
-                        val result = FirebaseService.registerUser(email, password)
-                        isLoading = false
-                        result.onSuccess {
-                            Toast.makeText(context, "Signup successful!", Toast.LENGTH_SHORT).show()
-                            onRegisterSuccess()
-                        }.onFailure {
-                            errorMessage = it.message ?: "Signup failed"
-                        }
-                    }
-                },
+                onClick = { userViewModel.signup(email, password, name, phone) },
+                enabled = !loading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else {
-                    Text("Register")
-                }
+                if (loading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                else Text("Create Account")
             }
 
-            TextButton(onClick = onNavigateToLogin) {
+            Spacer(Modifier.height(8.dp))
+
+            TextButton(onClick = onGoToLogin) {
                 Text("Already have an account? Login")
             }
 
-            errorMessage?.let {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+            if (!error.isNullOrEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                Text(error!!, color = MaterialTheme.colorScheme.error)
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSignupScreen() {
-    SignupScreen(
-        onRegisterSuccess = {},
-        onNavigateToLogin = {}
-    )
 }

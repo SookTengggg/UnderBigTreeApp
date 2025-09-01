@@ -1,66 +1,83 @@
 package com.example.underbigtreeapp.ui.welcomePage
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.underbigtreeapp.data.remote.FirebaseService
+import com.example.underbigtreeapp.viewModel.UserViewModel
 
 @Composable
 fun WelcomeScreen(
+    userViewModel: UserViewModel,
+    onGoToProfile: () -> Unit,
+    onGoToPoints: () -> Unit,
     onLogout: () -> Unit,
-    onContinue: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    onNavigateToSignup: () -> Unit
 ) {
-    val context = LocalContext.current
+    val user by userViewModel.user.observeAsState()
+    val loading by userViewModel.loading.observeAsState(false)
+    val error by userViewModel.error.observeAsState()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Welcome!",
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Text("Welcome", style = MaterialTheme.typography.headlineMedium)
 
-            Button(
-                onClick = {
-                    FirebaseService.logout()
-                    Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
-                    onLogout()
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Logout")
-            }
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = onContinue,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Continue to Home")
+            when {
+                loading -> {
+                    CircularProgressIndicator()
+                }
+                user != null -> {
+                    Text("Hello, ${user!!.displayName}!", style = MaterialTheme.typography.bodyLarge)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onGoToProfile, modifier = Modifier.fillMaxWidth()) {
+                        Text("Profile")
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(onClick = onGoToPoints, modifier = Modifier.fillMaxWidth()) {
+                        Text("Points")
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                        Text("Logout")
+                    }
+                }
+                else -> {
+                    error?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    Button(
+                        onClick = onNavigateToLogin,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Login") }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onNavigateToSignup,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Sign Up") }
+                }
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewWelcomeScreen() {
-    WelcomeScreen(
-        onLogout = {},
-        onContinue = {}
-    )
 }
